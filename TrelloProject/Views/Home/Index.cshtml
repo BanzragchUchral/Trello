@@ -1,8 +1,134 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@model List<CardModel>
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<html>
+    <head>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js'></script>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.js'></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.css"/>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.css"/>
+    </head>
+    <body onload="init()">
+
+        <button onclick="create()">Create</button>
+
+        <div id="dragparent">
+            <div id="pending" class="dragcolumn">
+                Pending
+                @{foreach(var pending in Model.Where(x => x.Status == "0"))
+                    {
+                        <div class="dragthing">
+                            @Html.Hidden(pending.id)
+                            <h4>@pending.Title</h4>
+                            <p>@pending.Description</p>
+                            <a id="@pending.id" onclick="details(this.id)">Show</a>
+                        </div>
+                    }
+                }
+            </div>
+            <div id="progress" class="dragcolumn">
+                Progress
+                @{foreach(var progress in Model.Where(x => x.Status == "1"))
+                    {
+                        <div class="dragthing">
+                            @Html.Hidden(progress.id)
+                            <h4>@progress.Title</h4>
+                            <p>@progress.Description</p>
+                            <a id="@progress.id" onclick="details(this.id)">Show</a>
+                        </div>
+                    }
+                }
+            </div>
+            <div id="blocked" class="dragcolumn">
+                Blocked
+                @{foreach(var blocked in Model.Where(x => x.Status == "2"))
+                    {
+                        <div class="dragthing">
+                            @Html.Hidden(blocked.id)
+                            <h4>@blocked.Title</h4>
+                            <p>@blocked.Description</p>
+                            <a id="@blocked.id" onclick="details(this.id)">Show</a>
+                        </div>
+                    }
+                }
+            </div>
+            <div id="done" class="dragcolumn">
+                Done
+                @{foreach(var done in Model.Where(x => x.Status == "3"))
+                    {
+                        <div class="dragthing">
+                            @Html.Hidden(done.id)
+                            <h4>@done.Title</h4>
+                            <p>@done.Description</p>
+                            <a id="@done.id" onclick="details(this.id)">Show</a>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="modal fade" id="myModal" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </body>
+    <script type="text/javascript">
+        function init() {
+            dragula([document.querySelector("#pending"), 
+                document.querySelector("#progress"), 
+                document.querySelector("#blocked"), 
+                document.querySelector("#done")])
+            .on('drop', function (el, current, prev) {
+                console.log(current.id);
+                console.log(prev.id);
+
+                var params = {
+                    id: $(el)[0].children[0].id,
+                };
+
+                var data = new FormData();
+                data.append('id', $(el)[0].children[0].id);
+                data.append('status', current.id);
+
+                console.log(params);
+
+                if(current.id !== prev.id)
+                {
+                    var request = new XMLHttpRequest();
+                    var url = "/Home/Move";
+                    request.open("POST", url, true);
+                    // request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                    request.send(data);
+                }
+            });
+        };
+
+        function details(id) {
+            $.get("@Url.Action("Details", "Home")/" + id,
+                function (data) {
+                    $('.modal-body').html(data);
+                });
+
+                $("#myModal").modal("show");
+        };
+
+        function create() {
+            $.get("@Url.Action("Create", "Home")",
+                function (data) {
+                    $('.modal-body').html(data);
+                });
+
+                $("#myModal").modal("show");
+        };
+    </script>
+</html>
