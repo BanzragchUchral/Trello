@@ -1,28 +1,20 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using TrelloProject.Constants;
 using TrelloProject.Models;
 
 namespace TrelloProject.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
-        {
-            _logger = logger;
-        }
-
         public async Task<IActionResult> IndexAsync()
         {
             var jwtToken = HttpContext.Session.GetString("JWTtoken");
@@ -40,17 +32,6 @@ namespace TrelloProject.Controllers
 
                 return View(model);
             }
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
         [HttpGet]
@@ -78,6 +59,7 @@ namespace TrelloProject.Controllers
             }
         }
 
+        [HttpGet]
         public async Task<IActionResult> DetailsAsync(string id)
         {
             var jwtToken = HttpContext.Session.GetString("JWTtoken");
@@ -96,12 +78,37 @@ namespace TrelloProject.Controllers
         }
 
         [HttpPost]
-        public IActionResult Move(string id, string status)
+        public async Task<IActionResult> MoveAsync(string id, string status)
         {
-            var asd = id;
-            return RedirectToAction("Index", "Home");
+            var statusValue = (Status)Enum.Parse(typeof(Status), status);
+
+            var model = new
+            {
+                id = id,
+                Status = ((int)statusValue).ToString()
+            };
+
+            var jwtToken = HttpContext.Session.GetString("JWTtoken");
+
+            using (var client = new HttpClient())
+            {
+                var request = new HttpRequestMessage
+                {
+                    Method = HttpMethod.Post,
+                    RequestUri = new Uri("https://mybekonlineauth.azurewebsites.net/api/UpdateItem"),
+                    Content = new StringContent(
+                        JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json")
+                };
+
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
+
+                var response = await client.SendAsync(request);
+
+                return RedirectToAction("Index", "Home");
+            }
         }
 
+        [HttpPost]
         public async Task<IActionResult> EditAsync(CardModel model)
         {
             var jwtToken = HttpContext.Session.GetString("JWTtoken");
@@ -122,6 +129,7 @@ namespace TrelloProject.Controllers
             }
         }
 
+        [HttpPost]
         public async Task<IActionResult> DeleteAsync(string id)
         {
             var jwtToken = HttpContext.Session.GetString("JWTtoken");
