@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,14 +22,8 @@ namespace TrelloProject.Controllers
         {
             using (var client = new HttpClient())
             {
-                var values = new Dictionary<string, string>
-                {
-                    { "Email", "test@test.com" },
-                    { "Password", "Qwerty12345" }
-                };
-
                 var content = new StringContent(
-                    JsonConvert.SerializeObject(values), Encoding.UTF8, "application/json");
+                    JsonConvert.SerializeObject(userModel), Encoding.UTF8, "application/json");
 
                 var response = await client.PostAsync("https://mybekonlineauth.azurewebsites.net/api/SignIn", content);
 
@@ -44,10 +37,24 @@ namespace TrelloProject.Controllers
 
                     return RedirectToAction("Index", "Home");
                 }
-
             }
 
             return View("Index");
+        }
+
+        [Route("Register")]
+        [HttpPost]
+        public async Task<IActionResult> RegisterAsync(UserModel userModel)
+        {
+            using (var client = new HttpClient())
+            {
+                var content = new StringContent(
+                    JsonConvert.SerializeObject(userModel), Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync("https://mybekonlineauth.azurewebsites.net/api/SignUp", content);
+
+                return RedirectToAction("Index");
+            }
         }
     }
 }
