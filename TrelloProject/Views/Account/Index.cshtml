@@ -1,0 +1,18 @@
+﻿@model UserModel
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Login</title>
+</head>
+<body>
+    <form asp-controller="Account" asp-action="Login" method="post">
+        <label asp-for="Email" />
+        <input asp-for="Email" />
+        <label asp-for="Password" />
+        <input asp-for="Password" />
+
+         <input type="submit" value="Submit" />
+    </form>
+</body>
+</html>
