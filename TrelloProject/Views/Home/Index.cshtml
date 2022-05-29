@@ -9,57 +9,57 @@
     </head>
     <body onload="init()">
 
-        <button onclick="create()">Create</button>
+        <button class="btn" onclick="create()">Create</button>
 
         <div id="dragparent">
             <div id="pending" class="dragcolumn">
-                Pending
+                <h2>Pending</h2>
                 @{foreach(var pending in Model.Where(x => x.Status == "0"))
                     {
                         <div class="dragthing">
                             @Html.Hidden(pending.id)
                             <h4>@pending.Title</h4>
                             <p>@pending.Description</p>
-                            <a id="@pending.id" onclick="details(this.id)">Show</a>
+                            <a class="btn" id="@pending.id" onclick="details(this.id)">Show</a>
                         </div>
                     }
                 }
             </div>
             <div id="progress" class="dragcolumn">
-                Progress
+                <h2>Progress</h2>
                 @{foreach(var progress in Model.Where(x => x.Status == "1"))
                     {
                         <div class="dragthing">
                             @Html.Hidden(progress.id)
                             <h4>@progress.Title</h4>
                             <p>@progress.Description</p>
-                            <a id="@progress.id" onclick="details(this.id)">Show</a>
+                            <a class="btn" id="@progress.id" onclick="details(this.id)">Show</a>
                         </div>
                     }
                 }
             </div>
             <div id="blocked" class="dragcolumn">
-                Blocked
+                <h2>Blocked</h2>
                 @{foreach(var blocked in Model.Where(x => x.Status == "2"))
                     {
                         <div class="dragthing">
                             @Html.Hidden(blocked.id)
                             <h4>@blocked.Title</h4>
                             <p>@blocked.Description</p>
-                            <a id="@blocked.id" onclick="details(this.id)">Show</a>
+                            <a class="btn" id="@blocked.id" onclick="details(this.id)">Show</a>
                         </div>
                     }
                 }
             </div>
             <div id="done" class="dragcolumn">
-                Done
+                <h2>Done</h2>
                 @{foreach(var done in Model.Where(x => x.Status == "3"))
                     {
                         <div class="dragthing">
                             @Html.Hidden(done.id)
                             <h4>@done.Title</h4>
                             <p>@done.Description</p>
-                            <a id="@done.id" onclick="details(this.id)">Show</a>
+                            <a class="btn" id="@done.id" onclick="details(this.id)">Show</a>
                         </div>
                     }
                 }
@@ -68,7 +68,7 @@
 
         <div class="modal fade" id="myModal" role="dialog">
             <div class="modal-dialog">
-                <div class="modal-content">
+                <div class="modal-content model-content-card">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
@@ -89,25 +89,15 @@
                 document.querySelector("#blocked"), 
                 document.querySelector("#done")])
             .on('drop', function (el, current, prev) {
-                console.log(current.id);
-                console.log(prev.id);
-
-                var params = {
-                    id: $(el)[0].children[0].id,
-                };
-
-                var data = new FormData();
-                data.append('id', $(el)[0].children[0].id);
-                data.append('status', current.id);
-
-                console.log(params);
-
                 if(current.id !== prev.id)
                 {
+                    var data = new FormData();
+                    data.append('id', $(el)[0].children[0].name);
+                    data.append('status', current.id);
+
                     var request = new XMLHttpRequest();
                     var url = "/Home/Move";
                     request.open("POST", url, true);
-                    // request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
                     request.send(data);
                 }
             });
