@@ -4,7 +4,6 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using TrelloProject.Models;
@@ -24,20 +23,6 @@ namespace TrelloProject.Controllers
         {
             using (var client = new HttpClient())
             {
-                //client.BaseAddress = new Uri("https://mybekonlineauth.azurewebsites.net");
-
-                //var postTask = client.PostAsJsonAsync<UserModel>("/api/SignIn", userModel);
-
-                //postTask.Wait();
-
-                //if (postTask.Result.IsSuccessStatusCode)
-                //{
-                //    return RedirectToAction("Index", "Home");
-                //}
-
-                client.DefaultRequestHeaders.Accept.Add(
-                    new MediaTypeWithQualityHeaderValue("application/json"));
-
                 var values = new Dictionary<string, string>
                 {
                     { "Email", "test@test.com" },
@@ -46,8 +31,6 @@ namespace TrelloProject.Controllers
 
                 var content = new StringContent(
                     JsonConvert.SerializeObject(values), Encoding.UTF8, "application/json");
-
-                client.DefaultRequestHeaders.ExpectContinue = false;
 
                 var response = await client.PostAsync("https://mybekonlineauth.azurewebsites.net/api/SignIn", content);
 
