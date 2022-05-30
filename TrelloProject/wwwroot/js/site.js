@@ -14,10 +14,13 @@
             data.append('id', $(el)[0].children[0].name);
             data.append('status', current.id);
 
-            var request = new XMLHttpRequest();
-            var url = "/Home/Move";
-            request.open("POST", url, true);
-            request.send(data);
+            fetch('/Home/Move', {
+                method: 'POST',
+                body: data
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         }
     });
 };
