@@ -33,3 +33,17 @@ function showModal(url) {
 
     $("#myModal").modal("show");
 };
+
+function deleteCard(id) {
+    var element = $('[name=' + id + ']').parent()[0];
+
+    element.remove();
+};
+
+function renderAll() {
+    var allCards = $.get('https://localhost:44348/api/Card/GetAllCards');
+
+    $.each($(allCards.responseJSON), function (asd) {
+        console.log(asd);
+    });
+};
