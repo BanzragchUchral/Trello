@@ -35,7 +35,7 @@ namespace TrelloProject.Controllers
                     var responseContent = await response.Content.ReadAsStringAsync();
                     var token = (JObject)JsonConvert.DeserializeObject(responseContent);
                     HttpContext.Session.SetString("JWTtoken", token["token"].Value<string>());
-
+                    HttpContext.Session.SetString("UserEmail", userModel.Email);
                     return RedirectToAction("Index", "Home");
                 }
                 else

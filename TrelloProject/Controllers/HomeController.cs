@@ -34,6 +34,8 @@ namespace TrelloProject.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAsync(CardModel cardModel)
         {
+            cardModel.OwnerEmail = HttpContext.Session.GetString("UserEmail");
+
             var response = await SendRequestToApi(
                 JsonConvert.SerializeObject(cardModel),
                 "/AddItem",
@@ -95,23 +97,6 @@ namespace TrelloProject.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        private async Task<bool> IsAuthenticatedAsync()
-        {
-            var jwtToken = HttpContext.Session.GetString("JWTtoken");
-
-            using (var client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", jwtToken);
-
-                var response = await client.GetAsync("https://mybekonlineauth.azurewebsites.net/api/AuthTest");
-                if (response.IsSuccessStatusCode)
-                    return true;
-                else
-                    return false;
-            }
-        }
-
         private async Task<HttpResponseMessage> SendRequestToApi(string content, string uri, HttpMethod httpMethod)
         {
             var jwtToken = HttpContext.Session.GetString("JWTtoken");
@@ -129,6 +114,13 @@ namespace TrelloProject.Controllers
 
                 return await client.SendAsync(request);
             }
+        }
+
+        private async Task<bool> IsAuthenticatedAsync()
+        {
+            var response = await SendRequestToApi(null, "/AuthTest", HttpMethod.Get);
+
+            return response.IsSuccessStatusCode;
         }
 
         private async Task<List<CardModel>> GetAllCards()
