@@ -3,7 +3,10 @@
     document.querySelector("#progress"),
     document.querySelector("#blocked"),
     document.querySelector("#done")], {
-        revertOnSpill: true
+        revertOnSpill: true,
+        moves: function (el, container, handle) {
+            return el.localName !== "h2";
+        }
     })
     .on('drop', function (el, current, prev) {
         if (current.id !== prev.id) {
