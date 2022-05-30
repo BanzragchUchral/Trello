@@ -27,12 +27,10 @@
                 <label class="placeholder">Description</>
             </div>
             <div class="form-group ic2">
-                <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<Status>()">
-                    <option>Select type ....</option>
-                </select>
+                <select asp-for="Status" class="form-control" asp-items="Html.GetEnumSelectList<Status>()"></select>
             </div>
             <div class="flex-parent-element">
-                <button type="text" class="btn flex-child-element">Edit</button>
+                <button class="btn flex-child-element">Edit</button>
                 <a class="btn flex-child-element" href="@Url.Action("Delete", "Home", new { id = Model.id})">Delete</a>
             </div>
 
