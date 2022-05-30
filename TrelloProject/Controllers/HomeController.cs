@@ -17,21 +17,12 @@ namespace TrelloProject.Controllers
     {
         public async Task<IActionResult> IndexAsync()
         {
-            var jwtToken = HttpContext.Session.GetString("JWTtoken");
-            if (jwtToken == null)
+            if (!await IsAuthenticatedAsync())
                 return RedirectToAction("Index", "Account");
 
-            using (var client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", jwtToken);
+            var model = await GetAllCards();
 
-                var response = await client.GetAsync("https://mybekonlineauth.azurewebsites.net/api/GetItems");
-                var jsonString = await response.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<List<CardModel>>(jsonString);
-
-                return View(model);
-            }
+            return View(model);
         }
 
         [HttpGet]
@@ -43,38 +34,20 @@ namespace TrelloProject.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAsync(CardModel cardModel)
         {
-            var jwtToken = HttpContext.Session.GetString("JWTtoken");
+            var response = await SendRequestToApi(
+                JsonConvert.SerializeObject(cardModel),
+                "/AddItem",
+                HttpMethod.Post);
 
-            using (var client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", jwtToken);
-
-                var content = new StringContent(
-                    JsonConvert.SerializeObject(cardModel), Encoding.UTF8, "application/json");
-
-                var response = await client.PostAsync("https://mybekonlineauth.azurewebsites.net/api/AddItem", content);
-
-                return RedirectToAction("Index", "Home");
-            }
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]
         public async Task<IActionResult> DetailsAsync(string id)
         {
-            var jwtToken = HttpContext.Session.GetString("JWTtoken");
+            var model = await GetAllCards();
 
-            using (var client = new HttpClient())
-            {
-                client.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", jwtToken);
-
-                var response = await client.GetAsync("https://mybekonlineauth.azurewebsites.net/api/GetItems");
-                var jsonString = await response.Content.ReadAsStringAsync();
-                var model = JsonConvert.DeserializeObject<List<CardModel>>(jsonString);
-
-                return PartialView("_CardDetail", model.Where(x => x.id == id).FirstOrDefault());
-            }
+            return PartialView("_CardDetail", model.Where(x => x.id == id).FirstOrDefault());
         }
 
         [HttpPost]
@@ -88,28 +61,41 @@ namespace TrelloProject.Controllers
                 Status = ((int)statusValue).ToString()
             };
 
-            var jwtToken = HttpContext.Session.GetString("JWTtoken");
+            var response = await SendRequestToApi(
+                JsonConvert.SerializeObject(model),
+                "/UpdateItem",
+                HttpMethod.Post);
 
-            using (var client = new HttpClient())
-            {
-                var request = new HttpRequestMessage
-                {
-                    Method = HttpMethod.Post,
-                    RequestUri = new Uri("https://mybekonlineauth.azurewebsites.net/api/UpdateItem"),
-                    Content = new StringContent(
-                        JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json")
-                };
-
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
-
-                var response = await client.SendAsync(request);
-
-                return RedirectToAction("Index", "Home");
-            }
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpPost]
         public async Task<IActionResult> EditAsync(CardModel model)
+        {
+            var response = await SendRequestToApi(
+                JsonConvert.SerializeObject(model),
+                "/UpdateItem",
+                HttpMethod.Post);
+
+            return View("Index", await GetAllCards());
+        }
+
+        public async Task<IActionResult> DeleteAsync(string id)
+        {
+            var values = new
+            {
+                id = id
+            };
+
+            var response = await SendRequestToApi(
+                JsonConvert.SerializeObject(values),
+                "/DeleteItem",
+                HttpMethod.Delete);
+
+            return RedirectToAction("Index", "Home");
+        }
+
+        private async Task<bool> IsAuthenticatedAsync()
         {
             var jwtToken = HttpContext.Session.GetString("JWTtoken");
 
@@ -118,44 +104,39 @@ namespace TrelloProject.Controllers
                 client.DefaultRequestHeaders.Authorization =
                     new AuthenticationHeaderValue("Bearer", jwtToken);
 
-                var content = new StringContent(
-                    JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-
-                var response = await client.PostAsync(
-                    "https://mybekonlineauth.azurewebsites.net/api/UpdateItem",
-                    content);
-
-                return RedirectToAction("Index", "Home");
+                var response = await client.GetAsync("https://mybekonlineauth.azurewebsites.net/api/AuthTest");
+                if (response.IsSuccessStatusCode)
+                    return true;
+                else
+                    return false;
             }
         }
 
-        [HttpPost]
-        public async Task<IActionResult> DeleteAsync(string id)
+        private async Task<HttpResponseMessage> SendRequestToApi(string content, string uri, HttpMethod httpMethod)
         {
             var jwtToken = HttpContext.Session.GetString("JWTtoken");
 
             using (var client = new HttpClient())
             {
-
-                var values = new
-                {
-                    id = id
-                };
-
                 var request = new HttpRequestMessage
                 {
-                    Method = HttpMethod.Delete,
-                    RequestUri = new Uri("https://mybekonlineauth.azurewebsites.net/api/DeleteItem"),
-                    Content = new StringContent(
-                        JsonConvert.SerializeObject(values), Encoding.UTF8, "application/json")
+                    Method = httpMethod,
+                    RequestUri = new Uri("https://mybekonlineauth.azurewebsites.net/api" + uri),
+                    Content = (content == null) ? null : new StringContent(content, Encoding.UTF8, "application/json")
                 };
 
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
 
-                var response = await client.SendAsync(request);
-
-                return RedirectToAction("Index", "Home");
+                return await client.SendAsync(request);
             }
+        }
+
+        private async Task<List<CardModel>> GetAllCards()
+        {
+            var response = await SendRequestToApi(null, "/GetItems", HttpMethod.Get);
+            var jsonString = await response.Content.ReadAsStringAsync();
+
+            return JsonConvert.DeserializeObject<List<CardModel>>(jsonString);
         }
     }
 }
