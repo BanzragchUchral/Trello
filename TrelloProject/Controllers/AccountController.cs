@@ -13,6 +13,9 @@ namespace TrelloProject.Controllers
     {
         public IActionResult Index()
         {
+            if (HttpContext.Session.GetString("JWTtoken") != null)
+                return RedirectToAction("Index", "Home");
+
             return View();
         }
 
@@ -27,9 +30,7 @@ namespace TrelloProject.Controllers
 
                 var response = await client.PostAsync("https://mybekonlineauth.azurewebsites.net/api/SignIn", content);
 
-                response.EnsureSuccessStatusCode();
-
-                if (response.Content != null)
+                if (response.IsSuccessStatusCode)
                 {
                     var responseContent = await response.Content.ReadAsStringAsync();
                     var token = (JObject)JsonConvert.DeserializeObject(responseContent);
@@ -37,9 +38,12 @@ namespace TrelloProject.Controllers
 
                     return RedirectToAction("Index", "Home");
                 }
+                else
+                {
+                    ViewBag.Message = "Failed to login";
+                    return View("Index");
+                }
             }
-
-            return View("Index");
         }
 
         [Route("Register")]
@@ -53,7 +57,12 @@ namespace TrelloProject.Controllers
 
                 var response = await client.PostAsync("https://mybekonlineauth.azurewebsites.net/api/SignUp", content);
 
-                return RedirectToAction("Index");
+                if (response.IsSuccessStatusCode)
+                    ViewBag.Message = "Successfully registered";
+                else
+                    ViewBag.Message = "Failed to register";
+
+                return View("Index");
             }
         }
     }
